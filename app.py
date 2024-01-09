@@ -1,7 +1,9 @@
 from flask import Flask, request, send_from_directory, Response
 from twilio.twiml.voice_response import VoiceResponse, Say
 from twilio.rest import Client
-import openai
+from openai import OpenAI
+
+client = OpenAI()
 import requests
 import os
 import time 
@@ -43,6 +45,7 @@ def transcribe_audio(recording_url):
     # Download the audio file from the recording_url
     audio_response = requests.get(recording_url)
     audio_file_name = "audio_recording.mp3"
+
     with open(audio_file_name, "wb") as audio_file:
         audio_file.write(audio_response.content)
 
@@ -55,7 +58,7 @@ def transcribe_audio(recording_url):
         files = {'file': audio_file}
         data = {'model': 'whisper-1'}
         response = requests.post(whisper_url, headers=headers, data=data, files=files)
-
+                
     # Remove the downloaded audio file after processing
     os.remove(audio_file_name)
 
@@ -69,13 +72,11 @@ def transcribe_audio(recording_url):
 def get_gpt3_response(transcribed_text):
     prompt = f"{transcribed_text}"
     
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": "You are an automated survey researcher who asks probing questions about politics:" + prompt}],
-        max_tokens=100,
-        stop=None,
-        temperature=0.5
-    )
+    response = client.chat.completions.create(model="gpt-3.5-turbo",
+    messages=[{"role": "user", "content": "You are an automated survey researcher who asks probing questions about politics:" + prompt}],
+    max_tokens=100,
+    stop=None,
+    temperature=0.5)
 
     if response.choices:
         gpt3_response = response.choices[0].message.content.strip()
