@@ -15,6 +15,10 @@ openai_key = os.environ.get('OPENAI_API_KEY')
 elevenlabs_key = os.environ.get('ELEVENLABS_API_KEY')
 voice_id = os.environ.get('ELEVENLABS_VOICE_ID')
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return "OK", 200
+
 @app.route('/incoming_call', methods=['POST'])
 
 def handle_call():
