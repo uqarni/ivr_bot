@@ -63,11 +63,11 @@ def transcribe_audio(recording_url):
     os.remove(audio_file_name)
 
     # Extract the transcribed text
-    if transcript.status == 'succeeded':
-        transcribed_text = transcript.data['text']
-        return transcribed_text
+    if transcript.text:
+        return transcript.text
     else:
         raise Exception(f"Whisper ASR API request failed with status: {transcript.status}")
+
 
 
 def get_gpt3_response(transcribed_text):
@@ -120,5 +120,7 @@ def text_to_speech(text):
 def serve_audio(file_name):
     return send_from_directory('static/audio', file_name)
 
+
 if __name__ == '__main__':
     app.run()
+
