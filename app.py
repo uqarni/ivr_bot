@@ -15,10 +15,6 @@ openai_key = os.environ.get('OPENAI_API_KEY')
 elevenlabs_key = os.environ.get('ELEVENLABS_API_KEY')
 voice_id = os.environ.get('ELEVENLABS_VOICE_ID')
 
-@app.route('/health', methods=['GET'])
-def health_check():
-    return "OK", 200
-
 @app.route('/incoming_call', methods=['POST'])
 
 def handle_call():
@@ -53,25 +49,25 @@ def transcribe_audio(recording_url):
     with open(audio_file_name, "wb") as audio_file:
         audio_file.write(audio_response.content)
 
-    whisper_url = 'https://api.openai.com/v1/audio/transcriptions'
-    headers = {
-        'Authorization': 'Bearer' + openai_key
-    }
+    # Initialize the OpenAI client
+    client = OpenAI(api_key=openai_key)
 
     with open(audio_file_name, "rb") as audio_file:
-        files = {'file': audio_file}
-        data = {'model': 'whisper-1'}
-        response = requests.post(whisper_url, headers=headers, data=data, files=files)
+        # Create a transcription using the Whisper model
+        transcript = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file
+        )
                 
     # Remove the downloaded audio file after processing
     os.remove(audio_file_name)
 
-    if response.status_code == 200:
-        transcribed_text = response.json()['text']
+    # Extract the transcribed text
+    if transcript.get('status') == 'succeeded':
+        transcribed_text = transcript['data']['text']
         return transcribed_text
     else:
-        print("Whisper API response:", response.json())
-        raise Exception(f"Whisper ASR API request failed with status code: {response.status_code}")
+        raise Exception(f"Whisper ASR API request failed with status: {transcript.get('status')}")
 
 def get_gpt3_response(transcribed_text):
     prompt = f"{transcribed_text}"
